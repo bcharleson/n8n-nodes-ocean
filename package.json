@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-ocean",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "n8n community node for Ocean.io API integration - lookalike company and people discovery",
   "keywords": [
     "n8n-community-node-package",
