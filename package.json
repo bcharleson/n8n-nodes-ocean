@@ -1,0 +1,54 @@
+{
+  "name": "n8n-nodes-ocean",
+  "version": "0.1.0",
+  "description": "n8n community node for Ocean.io API integration - lookalike company and people discovery",
+  "keywords": [
+    "n8n-community-node-package",
+    "ocean.io",
+    "lookalike",
+    "prospecting",
+    "lead generation",
+    "data enrichment"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/bcharleson/n8n-nodes-ocean",
+  "author": {
+    "name": "Brandon Charleson",
+    "email": "170791+bcharleson@users.noreply.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bcharleson/n8n-nodes-ocean.git"
+  },
+  "engines": {
+    "node": ">=18.10",
+    "pnpm": ">=9.1"
+  },
+  "packageManager": "pnpm@9.1.4",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/OceanApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Ocean/Ocean.node.js"
+    ]
+  },
+  "devDependencies": {
+    "typescript": "^5.5.3",
+    "gulp": "^4.0.2"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
