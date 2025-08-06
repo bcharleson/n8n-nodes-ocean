@@ -5,7 +5,7 @@
     "lib": ["ES2022"],
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -22,8 +22,7 @@
     "resolveJsonModule": true
   },
   "include": [
-    "credentials/**/*",
-    "nodes/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "dist",
