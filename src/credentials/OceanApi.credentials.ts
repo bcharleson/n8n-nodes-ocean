@@ -1,7 +1,9 @@
-import {
+import type {
 	IAuthenticateGeneric,
+	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
+	Icon,
 } from 'n8n-workflow';
 
 export class OceanApi implements ICredentialType {
@@ -10,6 +12,11 @@ export class OceanApi implements ICredentialType {
 	displayName = 'Ocean.io API';
 
 	documentationUrl = 'https://docs.ocean.io/getting-started/authentication';
+
+	icon: Icon = {
+		light: 'file:ocean-logomark.svg',
+		dark: 'file:ocean-logomark.svg',
+	};
 
 	properties: INodeProperties[] = [
 		{
@@ -29,6 +36,14 @@ export class OceanApi implements ICredentialType {
 			headers: {
 				'X-Api-Token': '={{$credentials.apiKey}}',
 			},
+		},
+	};
+
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL: 'https://api.ocean.io',
+			url: '/v2/credits/balance',
+			method: 'GET',
 		},
 	};
 }
