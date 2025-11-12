@@ -18,6 +18,18 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 After installation restart n8n to register the new nodes.
 
+## Features
+
+This node provides **complete coverage** of the Ocean.io API with 13 operations across 5 resources:
+
+- ✅ **Company** (2 operations): Search and enrich company data
+- ✅ **Person** (2 operations): Search and enrich people data
+- ✅ **Reveal** (2 operations): Reveal emails and phone numbers
+- ✅ **Autocomplete** (4 operations): Get suggestions for companies, job titles, keywords, and skills
+- ✅ **Other** (3 operations): Credit balance, data fields, and company warmup
+
+**100% API Coverage** - All Ocean.io API endpoints are implemented!
+
 ## Operations
 
 ### Company Resource
@@ -70,7 +82,63 @@ Enhance individual prospect data with Ocean.io's database.
 - `LinkedIn Handle`: LinkedIn handle (the part after linkedin.com/in/)
 - `Person Name`: Full name of the person to enrich
 
-### Credits Resource
+### Reveal Resource
+
+#### Reveal Emails (1 email credit per person)
+Reveal and verify email addresses for people. This operation uses your email credits pool.
+
+**Key Features:**
+- **Batch Processing**: Reveal multiple emails in a single request
+- **Verification**: Returns verification status for each email
+- **Multiple Identifiers**: Use LinkedIn handle, name, or company domain
+
+**Parameters:**
+- `People`: List of people to reveal emails for
+  - `LinkedIn Handle`: LinkedIn handle (e.g., john-doe)
+  - `Person Name`: Full name of the person
+  - `Company Domain`: Company domain to help identify the person
+
+#### Reveal Phones (1 phone credit per person)
+Reveal and verify phone numbers for people. This operation uses your phone credits pool.
+
+**Key Features:**
+- **Batch Processing**: Reveal multiple phone numbers in a single request
+- **Verification**: Returns verification status for each phone number
+- **Multiple Identifiers**: Use LinkedIn handle, name, or company domain
+
+**Parameters:**
+- `People`: List of people to reveal phone numbers for
+  - `LinkedIn Handle`: LinkedIn handle (e.g., john-doe)
+  - `Person Name`: Full name of the person
+  - `Company Domain`: Company domain to help identify the person
+
+### Autocomplete Resource
+
+#### Autocomplete Companies (Free)
+Get company name suggestions based on partial input. Useful for building search interfaces.
+
+**Parameters:**
+- `Query`: Partial company name to get suggestions for
+
+#### Autocomplete Job Titles (Free)
+Get job title suggestions based on partial input. Helps standardize job title searches.
+
+**Parameters:**
+- `Query`: Partial job title to get suggestions for
+
+#### Autocomplete Keywords (Free)
+Get keyword suggestions for search queries. Improves search accuracy.
+
+**Parameters:**
+- `Query`: Partial keyword to get suggestions for
+
+#### Autocomplete Skills (Free)
+Get skill suggestions based on partial input. Useful for people searches.
+
+**Parameters:**
+- `Query`: Partial skill name to get suggestions for
+
+### Other Resource
 
 #### Get Credit Balance (Free)
 Monitor your Ocean.io API credit usage and remaining balance.
@@ -79,6 +147,33 @@ Monitor your Ocean.io API credit usage and remaining balance.
 - Standard credits balance
 - Email credits balance (for email reveal operations)
 - Phone credits balance (for phone reveal operations)
+
+#### Get Data Fields (Free)
+Retrieve all valid data fields for Ocean.io searches. Returns industries, technologies, regions, seniorities, departments, and more.
+
+**Use Cases:**
+- Build dynamic dropdowns in your application
+- Validate search parameters before making requests
+- Discover available filter options
+
+**Returns:**
+- Industries list
+- Technologies list
+- Regions/countries list
+- Seniorities list
+- Departments list
+- And more...
+
+#### Warmup Companies (Free)
+Pre-load company data for faster subsequent searches. Useful for large-scale operations.
+
+**Parameters:**
+- `Company Domains`: Comma-separated list of company domains to warmup
+
+**Use Cases:**
+- Prepare data before bulk enrichment operations
+- Optimize performance for frequently accessed companies
+- Reduce latency for time-sensitive workflows
 
 ## Authentication
 
@@ -92,11 +187,23 @@ This node uses Ocean.io's API key authentication. You can find your API key in y
 
 Ocean.io operations consume credits from your account:
 
+### Standard Credits
 - **Company Search**: 1 credit per company returned
 - **Company Enrich**: 1 credit (with domain) or 5 credits (without domain)
 - **People Search**: 1-3 credits per person (depending on lookalike usage)
 - **Person Enrich**: 3 credits per person
-- **Credit Balance**: Free operation
+
+### Email Credits
+- **Reveal Emails**: 1 email credit per person
+
+### Phone Credits
+- **Reveal Phones**: 1 phone credit per person
+
+### Free Operations
+- **Credit Balance**: Free
+- **Get Data Fields**: Free
+- **Autocomplete** (all types): Free
+- **Warmup Companies**: Free
 
 ## Example Workflows
 
@@ -111,10 +218,28 @@ Ocean.io operations consume credits from your account:
 2. Provide domain/email/LinkedIn handle from your CRM
 3. Merge enriched data back into your CRM system
 
+### Reveal Contact Information
+1. Use **Person > Search People** to find prospects
+2. Use **Reveal > Reveal Emails** to get verified email addresses
+3. Use **Reveal > Reveal Phones** to get verified phone numbers
+4. Export to your CRM or outreach tool
+
+### Build Dynamic Search Forms
+1. Use **Autocomplete > Autocomplete Companies** for company name suggestions
+2. Use **Autocomplete > Autocomplete Job Titles** for role suggestions
+3. Use **Other > Get Data Fields** to populate industry/technology dropdowns
+4. Create user-friendly search interfaces with validated inputs
+
+### Optimize Bulk Operations
+1. Use **Other > Warmup Companies** to pre-load company data
+2. Run bulk enrichment operations with reduced latency
+3. Monitor performance improvements for frequently accessed companies
+
 ### Monitor Credit Usage
-1. Use **Credits > Get Credit Balance** before expensive operations
+1. Use **Other > Get Credit Balance** before expensive operations
 2. Set up conditional logic to prevent workflows from running when credits are low
 3. Send alerts when credit balance drops below threshold
+4. Track email and phone credit usage separately
 
 ## Rate Limits
 

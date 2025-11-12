@@ -1,11 +1,11 @@
 import {
-	IExecuteFunctions,
-	ILoadOptionsFunctions,
-	IDataObject,
-	IHttpRequestMethods,
-	IRequestOptions,
-	NodeApiError,
-	NodeOperationError,
+    IExecuteFunctions,
+    ILoadOptionsFunctions,
+    IDataObject,
+    IHttpRequestMethods,
+    IHttpRequestOptions,
+    NodeApiError,
+    NodeOperationError,
 } from 'n8n-workflow';
 
 /**
@@ -18,7 +18,7 @@ export async function oceanApiRequest(
 	body: IDataObject = {},
 	qs: IDataObject = {},
 ): Promise<any> {
-	const options: IRequestOptions = {
+    const options: IHttpRequestOptions = {
 		method,
 		body,
 		qs,
@@ -26,17 +26,18 @@ export async function oceanApiRequest(
 		json: true,
 	};
 
-	try {
-		return await this.helpers.httpRequestWithAuthentication.call(this, 'oceanApi', options);
-	} catch (error) {
+    try {
+        return await this.helpers.httpRequestWithAuthentication.call(this, 'oceanApi', options);
+    } catch (error: unknown) {
 		// Handle Ocean.io specific errors
-		if (error.response?.body) {
-			const errorBody = error.response.body;
+        const err: any = error as any;
+        if (err.response?.body) {
+            const errorBody = err.response.body;
 			
 			// Handle common Ocean.io API errors
 			if (errorBody.detail) {
 				if (typeof errorBody.detail === 'string') {
-					throw new NodeApiError(this.getNode(), error, {
+                    throw new NodeApiError(this.getNode(), err as any, {
 						message: `Ocean.io API Error: ${errorBody.detail}`,
 						description: getErrorDescription(errorBody.detail),
 					});
@@ -48,14 +49,14 @@ export async function oceanApiRequest(
 						`${err.loc?.join('.') || 'field'}: ${err.msg}`
 					).join(', ');
 					
-					throw new NodeApiError(this.getNode(), error, {
+                    throw new NodeApiError(this.getNode(), err as any, {
 						message: `Ocean.io Validation Error: ${validationErrors}`,
 					});
 				}
 			}
 		}
 		
-		throw new NodeApiError(this.getNode(), error);
+        throw new NodeApiError(this.getNode(), err as any);
 	}
 }
 
