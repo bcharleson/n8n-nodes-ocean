@@ -114,6 +114,10 @@ export async function oceanApiRequestAllItems(
 			items = response;
 		}
 
+		if (!Array.isArray(items)) {
+			items = [];
+		}
+
 		if (items.length > 0) {
 			allItems = allItems.concat(items);
 		}

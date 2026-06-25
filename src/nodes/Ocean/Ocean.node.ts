@@ -1,13 +1,22 @@
 import {
-    IExecuteFunctions,
-    INodeExecutionData,
-    INodeType,
-    INodeTypeDescription,
-    NodeConnectionType,
-    NodeOperationError,
+	IExecuteFunctions,
+	IDataObject,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeDescription,
+	NodeConnectionType,
+	NodeOperationError,
 } from 'n8n-workflow';
 
 import { oceanApiRequest, oceanApiRequestAllItems } from './GenericFunctions';
+import {
+	buildCompanySearchBody,
+	buildEnrichCompanyBody,
+	buildEnrichPersonBody,
+	buildPeopleSearchBody,
+	buildRevealBody,
+	buildWarmupBody,
+} from './RequestBuilders';
 
 import { companyOperations, companyFields } from './CompanyDescription';
 import { personOperations, personFields } from './PersonDescription';
@@ -27,8 +36,8 @@ export class Ocean implements INodeType {
 		defaults: {
 			name: 'Ocean.io',
 		},
-        inputs: [NodeConnectionType.Main],
-        outputs: [NodeConnectionType.Main],
+		inputs: [NodeConnectionType.Main],
+		outputs: [NodeConnectionType.Main],
 		credentials: [
 			{
 				name: 'oceanApi',
@@ -62,12 +71,12 @@ export class Ocean implements INodeType {
 					{
 						name: 'Reveal',
 						value: 'reveal',
-						description: 'Reveal and verify contact information (emails and phones)',
+						description: 'Reveal emails and phone numbers by Ocean person ID',
 					},
 					{
 						name: 'Autocomplete',
 						value: 'autocomplete',
-						description: 'Get autocomplete suggestions for companies, job titles, keywords, and skills',
+						description: 'Get autocomplete suggestions for companies, job titles, keywords, skills, and locations',
 					},
 					{
 						name: 'Other',
@@ -95,8 +104,7 @@ export class Ocean implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 		const length = items.length;
 
-		const resource = this.getNodeParameter('resource', 0);
-		const operation = this.getNodeParameter('operation', 0);
+		const resource = this.getNodeParameter('resource', 0) as string;
 
 		for (let i = 0; i < length; i++) {
 			try {
@@ -119,7 +127,7 @@ export class Ocean implements INodeType {
 				}
 
 				const executionData = this.helpers.constructExecutionMetaData(
-					this.helpers.returnJsonArray(responseData),
+					this.helpers.returnJsonArray(responseData as IDataObject | IDataObject[]),
 					{ itemData: { item: i } },
 				);
 
@@ -141,200 +149,146 @@ export class Ocean implements INodeType {
 	}
 }
 
-// Helper operations implemented as standalone functions to preserve correct `this` typing
-async function executeCompanyOperation(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const operation = this.getNodeParameter('operation', itemIndex) as string;
-    if (operation === 'search') {
-        return searchCompanies.call(this, itemIndex);
-    } else if (operation === 'enrich') {
-        return enrichCompany.call(this, itemIndex);
-    }
-    throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
+async function executeCompanyOperation(this: IExecuteFunctions, itemIndex: number): Promise<unknown> {
+	const operation = this.getNodeParameter('operation', itemIndex) as string;
+
+	if (operation === 'search') {
+		return searchCompanies.call(this, itemIndex);
+	}
+
+	if (operation === 'enrich') {
+		const domain = this.getNodeParameter('domain', itemIndex, '') as string;
+		const body = buildEnrichCompanyBody(domain);
+		return oceanApiRequest.call(this, 'POST', '/v2/enrich/company', body);
+	}
+
+	throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
 }
 
-async function executePersonOperation(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const operation = this.getNodeParameter('operation', itemIndex) as string;
-    if (operation === 'search') {
-        return searchPeople.call(this, itemIndex);
-    } else if (operation === 'enrich') {
-        return enrichPerson.call(this, itemIndex);
-    }
-    throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
+async function executePersonOperation(this: IExecuteFunctions, itemIndex: number): Promise<unknown> {
+	const operation = this.getNodeParameter('operation', itemIndex) as string;
+
+	if (operation === 'search') {
+		return searchPeople.call(this, itemIndex);
+	}
+
+	if (operation === 'enrich') {
+		const body = buildEnrichPersonBody({
+			linkedin: this.getNodeParameter('linkedin', itemIndex, '') as string,
+			oceanId: this.getNodeParameter('oceanId', itemIndex, '') as string,
+			name: this.getNodeParameter('personName', itemIndex, '') as string,
+			firstName: this.getNodeParameter('firstName', itemIndex, '') as string,
+			lastName: this.getNodeParameter('lastName', itemIndex, '') as string,
+			email: this.getNodeParameter('email', itemIndex, '') as string,
+			companyDomain: this.getNodeParameter('companyDomain', itemIndex, '') as string,
+		});
+		return oceanApiRequest.call(this, 'POST', '/v2/enrich/person', body);
+	}
+
+	throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
 }
 
-async function executeRevealOperation(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const operation = this.getNodeParameter('operation', itemIndex) as string;
-    if (operation === 'revealEmails') {
-        return revealEmails.call(this, itemIndex);
-    } else if (operation === 'revealPhones') {
-        return revealPhones.call(this, itemIndex);
-    }
-    throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
+async function executeRevealOperation(this: IExecuteFunctions, itemIndex: number): Promise<unknown> {
+	const operation = this.getNodeParameter('operation', itemIndex) as string;
+	const oceanIds = this.getNodeParameter('oceanIds', itemIndex, '') as string;
+	const webhookUrl = this.getNodeParameter('webhookUrl', itemIndex, '') as string;
+	const body = buildRevealBody(oceanIds, webhookUrl);
+
+	if (operation === 'revealEmails') {
+		return oceanApiRequest.call(this, 'POST', '/v2/reveal/emails', body);
+	}
+
+	if (operation === 'revealPhones') {
+		return oceanApiRequest.call(this, 'POST', '/v2/reveal/phones', body);
+	}
+
+	throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
 }
 
-async function executeAutocompleteOperation(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const operation = this.getNodeParameter('operation', itemIndex) as string;
-    const query = this.getNodeParameter('query', itemIndex) as string;
-    const body = { query };
+async function executeAutocompleteOperation(this: IExecuteFunctions, itemIndex: number): Promise<unknown> {
+	const operation = this.getNodeParameter('operation', itemIndex) as string;
+	const query = (this.getNodeParameter('query', itemIndex, '') as string).trim();
 
-    if (operation === 'companies') {
-        const response = await oceanApiRequest.call(this, 'POST', '/v2/autocomplete/companies', body);
-        return response;
-    } else if (operation === 'jobTitles') {
-        const response = await oceanApiRequest.call(this, 'POST', '/v2/autocomplete/jobTitles', body);
-        return response;
-    } else if (operation === 'keywords') {
-        const response = await oceanApiRequest.call(this, 'POST', '/v2/autocomplete/keywords', body);
-        return response;
-    } else if (operation === 'skills') {
-        const response = await oceanApiRequest.call(this, 'POST', '/v2/autocomplete/skills', body);
-        return response;
-    }
-    throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
+	if (!query) {
+		throw new NodeOperationError(this.getNode(), 'Query is required for autocomplete operations', { itemIndex });
+	}
+
+	const endpoints: Record<string, { path: string; body: Record<string, string> }> = {
+		companies: { path: '/v2/autocomplete/companies', body: { name: query } },
+		jobTitles: { path: '/v2/autocomplete/job-titles', body: { query } },
+		keywords: { path: '/v2/autocomplete/keywords', body: { query } },
+		skills: { path: '/v2/autocomplete/skills', body: { query } },
+		locations: { path: '/v2/autocomplete/locations', body: { query } },
+	};
+
+	const config = endpoints[operation];
+	if (!config) {
+		throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
+	}
+
+	return oceanApiRequest.call(this, 'POST', config.path, config.body);
 }
 
-async function executeOtherOperation(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const operation = this.getNodeParameter('operation', itemIndex) as string;
-    if (operation === 'getBalance') {
-        return getCreditBalance.call(this, itemIndex);
-    } else if (operation === 'getDataFields') {
-        return getDataFields.call(this, itemIndex);
-    } else if (operation === 'warmupCompanies') {
-        return warmupCompanies.call(this, itemIndex);
-    }
-    throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
+async function executeOtherOperation(this: IExecuteFunctions, itemIndex: number): Promise<unknown> {
+	const operation = this.getNodeParameter('operation', itemIndex) as string;
+
+	if (operation === 'getBalance') {
+		return oceanApiRequest.call(this, 'GET', '/v2/credits/balance');
+	}
+
+	if (operation === 'getDataFields') {
+		return oceanApiRequest.call(this, 'GET', '/v2/data-fields');
+	}
+
+	if (operation === 'warmupCompanies') {
+		const companyDomains = this.getNodeParameter('companyDomains', itemIndex, '') as string;
+		const body = buildWarmupBody(companyDomains);
+		return oceanApiRequest.call(this, 'POST', '/v2/warmup/companies', body);
+	}
+
+	throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex });
 }
 
-async function searchCompanies(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const returnAll = this.getNodeParameter('returnAll', itemIndex, false) as boolean;
-    const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
-    const body: any = {};
-    const lookalikeDomains = this.getNodeParameter('lookalikeDomains', itemIndex, '') as string;
-    if (lookalikeDomains) body.lookalike_domains = lookalikeDomains.split(',').map((d) => d.trim()).filter((d) => d);
-    const companyName = this.getNodeParameter('companyName', itemIndex, '') as string;
-    if (companyName) body.company_name = companyName;
-    const domain = this.getNodeParameter('domain', itemIndex, '') as string;
-    if (domain) body.domain = domain;
-    const employeeCountMin = this.getNodeParameter('employeeCountMin', itemIndex, undefined) as number;
-    const employeeCountMax = this.getNodeParameter('employeeCountMax', itemIndex, undefined) as number;
-    if (employeeCountMin !== undefined || employeeCountMax !== undefined) {
-        body.employee_count = {} as any;
-        if (employeeCountMin !== undefined) (body.employee_count as any).min = employeeCountMin;
-        if (employeeCountMax !== undefined) (body.employee_count as any).max = employeeCountMax;
-    }
-    const countries = this.getNodeParameter('countries', itemIndex, '') as string;
-    if (countries) body.countries = countries.split(',').map((c) => c.trim()).filter((c) => c);
-    const industries = this.getNodeParameter('industries', itemIndex, '') as string;
-    if (industries) body.industries = industries.split(',').map((i) => i.trim()).filter((i) => i);
-    if (!returnAll) body.size = limit;
-    if (returnAll) {
-        return await oceanApiRequestAllItems.call(this, 'POST', '/v3/search/companies', body);
-    }
-    const response = await oceanApiRequest.call(this, 'POST', '/v3/search/companies', body);
-    return response.companies || [];
+async function searchCompanies(this: IExecuteFunctions, itemIndex: number): Promise<unknown> {
+	const returnAll = this.getNodeParameter('returnAll', itemIndex, false) as boolean;
+	const body = buildCompanySearchBody({
+		returnAll,
+		limit: this.getNodeParameter('limit', itemIndex, 50) as number,
+		lookalikeDomains: this.getNodeParameter('lookalikeDomains', itemIndex, '') as string,
+		domain: this.getNodeParameter('domain', itemIndex, '') as string,
+		employeeCountMin: this.getNodeParameter('employeeCountMin', itemIndex, '') as number | string,
+		employeeCountMax: this.getNodeParameter('employeeCountMax', itemIndex, '') as number | string,
+		countries: this.getNodeParameter('countries', itemIndex, '') as string,
+		industries: this.getNodeParameter('industries', itemIndex, '') as string,
+		companiesFiltersJson: this.getNodeParameter('companiesFiltersJson', itemIndex, '') as string,
+	});
+
+	if (returnAll) {
+		return oceanApiRequestAllItems.call(this, 'POST', '/v3/search/companies', body);
+	}
+
+	const response = await oceanApiRequest.call(this, 'POST', '/v3/search/companies', body);
+	return Array.isArray(response.companies) ? response.companies : [];
 }
 
-async function enrichCompany(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const body: any = {};
-    const domain = this.getNodeParameter('domain', itemIndex) as string;
-    if (domain) body.domain = domain;
-    const companyName = this.getNodeParameter('companyName', itemIndex, '') as string;
-    if (companyName) body.company_name = companyName;
-    const response = await oceanApiRequest.call(this, 'POST', '/v2/enrich/company', body);
-    return response;
-}
+async function searchPeople(this: IExecuteFunctions, itemIndex: number): Promise<unknown> {
+	const body = buildPeopleSearchBody({
+		returnAll: this.getNodeParameter('returnAll', itemIndex, false) as boolean,
+		limit: this.getNodeParameter('limit', itemIndex, 50) as number,
+		lookalikePeople: this.getNodeParameter('lookalikePeople', itemIndex, '') as string,
+		personName: this.getNodeParameter('personName', itemIndex, '') as string,
+		jobTitles: this.getNodeParameter('jobTitles', itemIndex, '') as string,
+		companyDomains: this.getNodeParameter('companyDomains', itemIndex, '') as string,
+		countries: this.getNodeParameter('countries', itemIndex, '') as string,
+		peopleFiltersJson: this.getNodeParameter('peopleFiltersJson', itemIndex, '') as string,
+		companiesFiltersJson: this.getNodeParameter('companiesFiltersJson', itemIndex, '') as string,
+		peoplePerCompany: this.getNodeParameter('peoplePerCompany', itemIndex, '') as number | string,
+	});
 
-async function searchPeople(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const returnAll = this.getNodeParameter('returnAll', itemIndex, false) as boolean;
-    const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
-    const body: any = {};
-    const lookalikePeople = this.getNodeParameter('lookalikePeople', itemIndex, '') as string;
-    if (lookalikePeople) body.lookalike_people = lookalikePeople.split(',').map((p) => p.trim()).filter((p) => p);
-    const personName = this.getNodeParameter('personName', itemIndex, '') as string;
-    if (personName) body.person_name = personName;
-    const jobTitles = this.getNodeParameter('jobTitles', itemIndex, '') as string;
-    if (jobTitles) body.job_titles = jobTitles.split(',').map((t) => t.trim()).filter((t) => t);
-    const companyDomains = this.getNodeParameter('companyDomains', itemIndex, '') as string;
-    if (companyDomains) body.company_domains = companyDomains.split(',').map((d) => d.trim()).filter((d) => d);
-    const countries = this.getNodeParameter('countries', itemIndex, '') as string;
-    if (countries) body.countries = countries.split(',').map((c) => c.trim()).filter((c) => c);
-    if (!returnAll) body.size = limit;
-    if (returnAll) {
-        return await oceanApiRequestAllItems.call(this, 'POST', '/v3/search/people', body);
-    }
-    const response = await oceanApiRequest.call(this, 'POST', '/v3/search/people', body);
-    return response.people || [];
-}
+	if (this.getNodeParameter('returnAll', itemIndex, false)) {
+		return oceanApiRequestAllItems.call(this, 'POST', '/v3/search/people', body);
+	}
 
-async function enrichPerson(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const body: any = {};
-    const email = this.getNodeParameter('email', itemIndex, '') as string;
-    if (email) body.email = email;
-    const linkedinHandle = this.getNodeParameter('linkedinHandle', itemIndex, '') as string;
-    if (linkedinHandle) body.linkedin_handle = linkedinHandle;
-    const personName = this.getNodeParameter('personName', itemIndex, '') as string;
-    if (personName) body.person_name = personName;
-    const response = await oceanApiRequest.call(this, 'POST', '/v2/enrich/person', body);
-    return response;
-}
-
-async function getCreditBalance(this: IExecuteFunctions, _itemIndex: number): Promise<any> {
-    const response = await oceanApiRequest.call(this, 'GET', '/v2/credits/balance');
-    return response;
-}
-
-async function revealEmails(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const peopleData = this.getNodeParameter('people', itemIndex, {}) as any;
-    const people = (peopleData.person || []).map((p: any) => {
-        const person: any = {};
-        if (p.linkedinHandle) person.linkedin_handle = p.linkedinHandle;
-        if (p.personName) person.person_name = p.personName;
-        if (p.companyDomain) person.company_domain = p.companyDomain;
-        return person;
-    }).filter((p: any) => Object.keys(p).length > 0);
-
-    if (people.length === 0) {
-        throw new NodeOperationError(this.getNode(), 'At least one person must be provided', { itemIndex });
-    }
-
-    const body = { people };
-    const response = await oceanApiRequest.call(this, 'POST', '/v2/reveal/emails', body);
-    return response;
-}
-
-async function revealPhones(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const peopleData = this.getNodeParameter('people', itemIndex, {}) as any;
-    const people = (peopleData.person || []).map((p: any) => {
-        const person: any = {};
-        if (p.linkedinHandle) person.linkedin_handle = p.linkedinHandle;
-        if (p.personName) person.person_name = p.personName;
-        if (p.companyDomain) person.company_domain = p.companyDomain;
-        return person;
-    }).filter((p: any) => Object.keys(p).length > 0);
-
-    if (people.length === 0) {
-        throw new NodeOperationError(this.getNode(), 'At least one person must be provided', { itemIndex });
-    }
-
-    const body = { people };
-    const response = await oceanApiRequest.call(this, 'POST', '/v2/reveal/phones', body);
-    return response;
-}
-
-async function getDataFields(this: IExecuteFunctions, _itemIndex: number): Promise<any> {
-    const response = await oceanApiRequest.call(this, 'GET', '/v2/data-fields');
-    return response;
-}
-
-async function warmupCompanies(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-    const companyDomains = this.getNodeParameter('companyDomains', itemIndex) as string;
-    const domains = companyDomains.split(',').map((d) => d.trim()).filter((d) => d);
-
-    if (domains.length === 0) {
-        throw new NodeOperationError(this.getNode(), 'At least one company domain must be provided', { itemIndex });
-    }
-
-    const body = { company_domains: domains };
-    const response = await oceanApiRequest.call(this, 'POST', '/v2/other/warmupCompanies', body);
-    return response;
+	const response = await oceanApiRequest.call(this, 'POST', '/v3/search/people', body);
+	return Array.isArray(response.people) ? response.people : [];
 }

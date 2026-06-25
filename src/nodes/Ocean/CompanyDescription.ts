@@ -112,8 +112,8 @@ export const companyFields: INodeProperties[] = [
 				operation: ['search'],
 			},
 		},
-		default: undefined,
-		description: 'Minimum number of employees',
+		default: '',
+		description: 'Minimum number of employees (maps to headcountMin)',
 	},
 	{
 		displayName: 'Employee Count Max',
@@ -125,8 +125,8 @@ export const companyFields: INodeProperties[] = [
 				operation: ['search'],
 			},
 		},
-		default: undefined,
-		description: 'Maximum number of employees',
+		default: '',
+		description: 'Maximum number of employees (maps to headcountMax)',
 	},
 	{
 		displayName: 'Countries',
@@ -156,6 +156,19 @@ export const companyFields: INodeProperties[] = [
 		placeholder: 'Software, Technology, SaaS',
 		description: 'Comma-separated list of industries to filter by',
 	},
+	{
+		displayName: 'Companies Filters JSON',
+		name: 'companiesFiltersJson',
+		type: 'json',
+		displayOptions: {
+			show: {
+				resource: ['company'],
+				operation: ['search'],
+			},
+		},
+		default: '',
+		description: 'Advanced company filters as JSON (merged with simple fields). Same shape as ocean-agent-cli --companies-filters.',
+	},
 
 	// Company Enrich Fields
 	{
@@ -169,19 +182,7 @@ export const companyFields: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Company domain to enrich (recommended - costs 1 credit vs 5 credits without)',
-	},
-	{
-		displayName: 'Company Name',
-		name: 'companyName',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['company'],
-				operation: ['enrich'],
-			},
-		},
-		default: '',
-		description: 'Company name to enrich (costs 5 credits if domain not provided)',
+		required: true,
+		description: 'Company domain to enrich (1 credit)',
 	},
 ];

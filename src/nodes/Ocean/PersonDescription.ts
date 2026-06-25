@@ -15,7 +15,7 @@ export const personOperations: INodeProperties[] = [
 			{
 				name: 'Search People',
 				value: 'search',
-				description: 'Find lookalike people using Ocean.io\'s discovery engine (1-3 credits per person)',
+				description: 'Find people using Ocean.io v3 search (1-3 credits per person)',
 				action: 'Search people',
 			},
 			{
@@ -30,7 +30,6 @@ export const personOperations: INodeProperties[] = [
 ];
 
 export const personFields: INodeProperties[] = [
-	// Person Search Fields
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -74,7 +73,7 @@ export const personFields: INodeProperties[] = [
 		},
 		default: '',
 		placeholder: 'john-doe-123456, jane-smith-789012',
-		description: 'Comma-separated list of LinkedIn handles to find similar people to. This is Ocean.io\'s core lookalike functionality.',
+		description: 'Comma-separated LinkedIn handles for lookalike people search',
 	},
 	{
 		displayName: 'Person Name',
@@ -83,11 +82,11 @@ export const personFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['person'],
-				operation: ['search'],
+				operation: ['search', 'enrich'],
 			},
 		},
 		default: '',
-		description: 'Search for people by name (partial matches supported)',
+		description: 'Person name filter for search, or full name for enrich',
 	},
 	{
 		displayName: 'Job Titles',
@@ -100,8 +99,8 @@ export const personFields: INodeProperties[] = [
 			},
 		},
 		default: '',
-		placeholder: 'CEO, CTO, VP of Sales, Marketing Director',
-		description: 'Comma-separated list of job titles to filter by',
+		placeholder: 'CEO, VP of Sales',
+		description: 'Comma-separated job titles (mapped to jobTitleKeywords.anyOf)',
 	},
 	{
 		displayName: 'Company Domains',
@@ -115,7 +114,7 @@ export const personFields: INodeProperties[] = [
 		},
 		default: '',
 		placeholder: 'example.com, company2.com',
-		description: 'Comma-separated list of company domains to find people from',
+		description: 'Comma-separated company domains (mapped to companiesFilters.domains)',
 	},
 	{
 		displayName: 'Countries',
@@ -128,11 +127,101 @@ export const personFields: INodeProperties[] = [
 			},
 		},
 		default: '',
-		placeholder: 'United States, Canada, United Kingdom',
-		description: 'Comma-separated list of countries to filter by',
+		placeholder: 'us, ca, gb',
+		description: 'Comma-separated country codes',
 	},
-
-	// Person Enrich Fields
+	{
+		displayName: 'People Per Company',
+		name: 'peoplePerCompany',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['person'],
+				operation: ['search'],
+			},
+		},
+		default: '',
+		description: 'Maximum people to return per company',
+	},
+	{
+		displayName: 'People Filters JSON',
+		name: 'peopleFiltersJson',
+		type: 'json',
+		displayOptions: {
+			show: {
+				resource: ['person'],
+				operation: ['search'],
+			},
+		},
+		default: '',
+		description: 'Advanced people filters as JSON. Same shape as ocean-agent-cli --people-filters.',
+	},
+	{
+		displayName: 'Companies Filters JSON',
+		name: 'companiesFiltersJson',
+		type: 'json',
+		displayOptions: {
+			show: {
+				resource: ['person'],
+				operation: ['search'],
+			},
+		},
+		default: '',
+		description: 'Advanced company filters as JSON for people search',
+	},
+	{
+		displayName: 'LinkedIn URL',
+		name: 'linkedin',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['person'],
+				operation: ['enrich'],
+			},
+		},
+		default: '',
+		placeholder: 'https://linkedin.com/in/johndoe',
+		description: 'LinkedIn profile URL',
+	},
+	{
+		displayName: 'Ocean ID',
+		name: 'oceanId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['person'],
+				operation: ['enrich'],
+			},
+		},
+		default: '',
+		description: 'Ocean.io person ID',
+	},
+	{
+		displayName: 'First Name',
+		name: 'firstName',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['person'],
+				operation: ['enrich'],
+			},
+		},
+		default: '',
+		description: 'First name (use with last name if no other identifier)',
+	},
+	{
+		displayName: 'Last Name',
+		name: 'lastName',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['person'],
+				operation: ['enrich'],
+			},
+		},
+		default: '',
+		description: 'Last name (use with first name if no other identifier)',
+	},
 	{
 		displayName: 'Email',
 		name: 'email',
@@ -147,8 +236,8 @@ export const personFields: INodeProperties[] = [
 		description: 'Email address to enrich',
 	},
 	{
-		displayName: 'LinkedIn Handle',
-		name: 'linkedinHandle',
+		displayName: 'Company Domain',
+		name: 'companyDomain',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -157,20 +246,6 @@ export const personFields: INodeProperties[] = [
 			},
 		},
 		default: '',
-		placeholder: 'john-doe-123456',
-		description: 'LinkedIn handle (the part after linkedin.com/in/)',
-	},
-	{
-		displayName: 'Person Name',
-		name: 'personName',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['person'],
-				operation: ['enrich'],
-			},
-		},
-		default: '',
-		description: 'Full name of the person to enrich',
+		description: 'Company domain to help match the person',
 	},
 ];

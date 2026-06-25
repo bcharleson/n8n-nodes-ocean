@@ -15,13 +15,13 @@ export const revealOperations: INodeProperties[] = [
 			{
 				name: 'Reveal Emails',
 				value: 'revealEmails',
-				description: 'Reveal and verify email addresses (uses email credits)',
+				description: 'Reveal email addresses by Ocean person ID (async via webhook)',
 				action: 'Reveal emails',
 			},
 			{
 				name: 'Reveal Phones',
 				value: 'revealPhones',
-				description: 'Reveal and verify phone numbers (uses phone credits)',
+				description: 'Reveal phone numbers by Ocean person ID (async via webhook)',
 				action: 'Reveal phones',
 			},
 		],
@@ -30,54 +30,32 @@ export const revealOperations: INodeProperties[] = [
 ];
 
 export const revealFields: INodeProperties[] = [
-	// Common fields for both operations
 	{
-		displayName: 'People',
-		name: 'people',
-		type: 'fixedCollection',
-		typeOptions: {
-			multipleValues: true,
-		},
+		displayName: 'Ocean Person IDs',
+		name: 'oceanIds',
+		type: 'string',
+		required: true,
 		displayOptions: {
 			show: {
 				resource: ['reveal'],
 			},
 		},
-		default: {},
-		placeholder: 'Add Person',
-		description: 'People to reveal contact information for',
-		options: [
-			{
-				name: 'person',
-				displayName: 'Person',
-				values: [
-					{
-						displayName: 'LinkedIn Handle',
-						name: 'linkedinHandle',
-						type: 'string',
-						default: '',
-						description: 'LinkedIn handle (e.g., john-doe)',
-						placeholder: 'john-doe',
-					},
-					{
-						displayName: 'Person Name',
-						name: 'personName',
-						type: 'string',
-						default: '',
-						description: 'Full name of the person',
-						placeholder: 'John Doe',
-					},
-					{
-						displayName: 'Company Domain',
-						name: 'companyDomain',
-						type: 'string',
-						default: '',
-						description: 'Company domain (e.g., example.com)',
-						placeholder: 'example.com',
-					},
-				],
+		default: '',
+		placeholder: 'abc123, def456',
+		description: 'Comma-separated Ocean.io person IDs to reveal contact data for',
+	},
+	{
+		displayName: 'Webhook URL',
+		name: 'webhookUrl',
+		type: 'string',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['reveal'],
 			},
-		],
+		},
+		default: '',
+		placeholder: 'https://your-app.com/webhooks/ocean',
+		description: 'URL where Ocean.io sends reveal results asynchronously',
 	},
 ];
-

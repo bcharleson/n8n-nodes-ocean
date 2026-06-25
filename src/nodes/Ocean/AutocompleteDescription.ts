@@ -36,6 +36,12 @@ export const autocompleteOperations: INodeProperties[] = [
 				description: 'Get skill suggestions',
 				action: 'Autocomplete skills',
 			},
+			{
+				name: 'Autocomplete Locations',
+				value: 'locations',
+				description: 'Get location suggestions',
+				action: 'Autocomplete locations',
+			},
 		],
 		default: 'companies',
 	},
@@ -57,4 +63,3 @@ export const autocompleteFields: INodeProperties[] = [
 		placeholder: 'Enter search term...',
 	},
 ];
-

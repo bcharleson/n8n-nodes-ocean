@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-ocean",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "n8n community node for Ocean.io API integration - lookalike company and people discovery",
   "keywords": [
     "n8n-community-node-package",
@@ -28,8 +28,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && gulp build:icons",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm run build"
+    "verify": "npm run build && node scripts/verify-package.js && node scripts/verify-request-builders.js",
+    "prepublishOnly": "npm run verify"
   },
   "files": [
     "dist",
@@ -47,8 +47,10 @@
     ]
   },
   "devDependencies": {
-    "typescript": "^5.5.3",
-    "gulp": "^4.0.2"
+    "@types/node": "^18.19.130",
+    "gulp": "^4.0.2",
+    "n8n-workflow": "^1.40.0",
+    "typescript": "^5.5.3"
   },
   "peerDependencies": {
     "n8n-workflow": "*"

@@ -34,7 +34,7 @@ export class OceanApi implements ICredentialType {
 		type: 'generic',
 		properties: {
 			headers: {
-				'x-api-token': '={{$credentials.apiKey}}',
+				'X-Api-Token': '={{$credentials.apiKey}}',
 			},
 		},
 	};
