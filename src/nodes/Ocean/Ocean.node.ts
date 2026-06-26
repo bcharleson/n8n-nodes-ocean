@@ -37,7 +37,10 @@ export class Ocean implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Ocean.io',
 		name: 'ocean',
-		icon: 'file:ocean-logomark.svg',
+		icon: {
+			light: 'file:ocean-logomark.svg',
+			dark: 'file:ocean-logomark.dark.svg',
+		},
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',

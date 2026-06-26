@@ -38,6 +38,7 @@
     "verify:e2e": "node scripts/verify-e2e-api.js",
     "verify:all": "npm run verify:audit && npm run verify:e2e",
     "lint": "n8n-node lint",
+    "release": "n8n-node release",
     "prepublishOnly": "npm run verify:audit"
   },
   "files": [
@@ -48,6 +49,7 @@
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
+    "strict": true,
     "credentials": [
       "dist/credentials/OceanApi.credentials.js"
     ],
@@ -64,6 +66,7 @@
     "gulp": "^4.0.2",
     "n8n-workflow": "^2.27.2",
     "nodemon": "^3.1.9",
+    "release-it": "^20.2.0",
     "typescript": "^5.5.3"
   },
   "peerDependencies": {

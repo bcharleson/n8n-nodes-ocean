@@ -40,7 +40,9 @@ for (const credentialPath of pkg.n8n.credentials) {
 }
 
 const iconPath = path.join(root, 'dist/nodes/Ocean/ocean-logomark.svg');
+const iconDarkPath = path.join(root, 'dist/nodes/Ocean/ocean-logomark.dark.svg');
 assert(fs.existsSync(iconPath), 'Node icon missing from dist output');
+assert(fs.existsSync(iconDarkPath), 'Node dark icon missing from dist output');
 
 console.log('Package verification passed.');
 console.log(`- Node: ${node.description.displayName}`);

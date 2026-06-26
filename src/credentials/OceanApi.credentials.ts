@@ -13,7 +13,10 @@ export class OceanApi implements ICredentialType {
 
 	documentationUrl = 'https://docs.ocean.io/getting-started/authentication';
 
-	icon: Icon = 'file:ocean-logomark.svg';
+	icon: Icon = {
+		light: 'file:ocean-logomark.svg',
+		dark: 'file:ocean-logomark.dark.svg',
+	};
 
 	properties: INodeProperties[] = [
 		{
