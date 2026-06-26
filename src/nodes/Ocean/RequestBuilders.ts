@@ -1,33 +1,69 @@
+/* eslint-disable @n8n/community-nodes/require-node-api-error */
 import type { IDataObject } from 'n8n-workflow';
 
 import {
+	clampSearchLimit,
 	normalizeCompaniesFilters,
-	normalizeDomain,
-	parseCsvOrArray,
+	normalizeCountryCodes,
+	normalizeDomainList,
+	normalizeIndustryValues,
+	parseEnrichDomain,
+	parseMultiValue,
 	parseJsonObject,
 } from './OceanPayloads';
+
+function parseHeadcount(value: number | string | undefined): number | undefined {
+	if (value === '' || value === undefined || value === null) {
+		return undefined;
+	}
+
+	const parsed = Number(value);
+	return Number.isNaN(parsed) ? undefined : parsed;
+}
 
 function setHeadcountRange(
 	filters: Record<string, unknown>,
 	minValue: number | string | undefined,
 	maxValue: number | string | undefined,
 ): void {
-	const min = minValue === '' || minValue === undefined ? undefined : Number(minValue);
-	const max = maxValue === '' || maxValue === undefined ? undefined : Number(maxValue);
+	const min = parseHeadcount(minValue);
+	let max = parseHeadcount(maxValue);
 
-	if (min !== undefined && !Number.isNaN(min)) filters.headcountMin = min;
-	if (max !== undefined && !Number.isNaN(max)) filters.headcountMax = max;
+	// n8n number fields often default empty inputs to 0.
+	if (min === 0 && max === 0) {
+		return;
+	}
+
+	if (max === 0 && min !== undefined) {
+		max = undefined;
+	}
+
+	if (min === undefined && max === undefined) {
+		return;
+	}
+
+	if (min !== undefined && max !== undefined && min > max) {
+		throw new Error('Employee Count Min cannot be greater than Employee Count Max');
+	}
+
+	if (min !== undefined) {
+		filters.headcountMin = min;
+	}
+
+	if (max !== undefined) {
+		filters.headcountMax = max;
+	}
 }
 
 export function buildCompanySearchBody(input: {
 	returnAll: boolean;
 	limit: number;
-	lookalikeDomains: string;
-	domain: string;
+	lookalikeDomains: string | string[];
+	domain: string | string[];
 	employeeCountMin: number | string | undefined;
 	employeeCountMax: number | string | undefined;
-	countries: string;
-	industries: string;
+	countries: string | string[] | undefined;
+	industries: string | string[] | undefined;
 	companiesFiltersJson: string;
 }): IDataObject {
 	const filters: Record<string, unknown> = parseJsonObject(
@@ -35,24 +71,24 @@ export function buildCompanySearchBody(input: {
 		'Companies Filters JSON',
 	);
 
-	const lookalikeDomains = parseCsvOrArray(input.lookalikeDomains);
+	const lookalikeDomains = normalizeDomainList(input.lookalikeDomains, 'Lookalike Domains');
 	if (lookalikeDomains.length > 0) {
 		filters.lookalikeDomains = lookalikeDomains;
 	}
 
-	const domains = parseCsvOrArray(input.domain);
+	const domains = normalizeDomainList(input.domain, 'Domain');
 	if (domains.length > 0) {
 		filters.domains = domains;
 	}
 
 	setHeadcountRange(filters, input.employeeCountMin, input.employeeCountMax);
 
-	const countries = parseCsvOrArray(input.countries);
+	const countries = normalizeCountryCodes(input.countries);
 	if (countries.length > 0) {
 		filters.countries = countries;
 	}
 
-	const industries = parseCsvOrArray(input.industries);
+	const industries = normalizeIndustryValues(input.industries);
 	if (industries.length > 0) {
 		filters.industries = industries;
 	}
@@ -65,8 +101,9 @@ export function buildCompanySearchBody(input: {
 	}
 
 	const body: IDataObject = { companiesFilters };
-	if (!input.returnAll) {
-		body.size = input.limit;
+	const size = clampSearchLimit(input.limit, input.returnAll);
+	if (size !== undefined) {
+		body.size = size;
 	}
 
 	return body;
@@ -75,11 +112,11 @@ export function buildCompanySearchBody(input: {
 export function buildPeopleSearchBody(input: {
 	returnAll: boolean;
 	limit: number;
-	lookalikePeople: string;
+	lookalikePeople: string | string[];
 	personName: string;
-	jobTitles: string;
-	companyDomains: string;
-	countries: string;
+	jobTitles: string | string[];
+	companyDomains: string | string[];
+	countries: string | string[] | undefined;
 	peopleFiltersJson: string;
 	companiesFiltersJson: string;
 	peoplePerCompany: number | string | undefined;
@@ -93,7 +130,7 @@ export function buildPeopleSearchBody(input: {
 		'Companies Filters JSON',
 	);
 
-	const lookalikePeople = parseCsvOrArray(input.lookalikePeople);
+	const lookalikePeople = parseMultiValue(input.lookalikePeople);
 	if (lookalikePeople.length > 0) {
 		peopleFilters.lookalikePeople = lookalikePeople;
 	}
@@ -102,17 +139,17 @@ export function buildPeopleSearchBody(input: {
 		peopleFilters.name = input.personName.trim();
 	}
 
-	const jobTitles = parseCsvOrArray(input.jobTitles);
+	const jobTitles = parseMultiValue(input.jobTitles);
 	if (jobTitles.length > 0) {
 		peopleFilters.jobTitleKeywords = { anyOf: jobTitles };
 	}
 
-	const countries = parseCsvOrArray(input.countries);
+	const countries = normalizeCountryCodes(input.countries);
 	if (countries.length > 0) {
 		peopleFilters.countries = countries;
 	}
 
-	const companyDomains = parseCsvOrArray(input.companyDomains);
+	const companyDomains = normalizeDomainList(input.companyDomains, 'Company Domains');
 	if (companyDomains.length > 0) {
 		companiesFiltersInput.domains = companyDomains;
 	}
@@ -134,8 +171,9 @@ export function buildPeopleSearchBody(input: {
 		);
 	}
 
-	if (!input.returnAll) {
-		body.size = input.limit;
+	const size = clampSearchLimit(input.limit, input.returnAll);
+	if (size !== undefined) {
+		body.size = size;
 	}
 
 	if (input.peoplePerCompany !== '' && input.peoplePerCompany !== undefined) {
@@ -149,13 +187,9 @@ export function buildPeopleSearchBody(input: {
 }
 
 export function buildEnrichCompanyBody(domain: string): IDataObject {
-	if (!domain?.trim()) {
-		throw new Error('Domain is required to enrich a company');
-	}
-
 	return {
 		company: {
-			domain: normalizeDomain(domain),
+			domain: parseEnrichDomain(domain, 'Domain'),
 		},
 	};
 }
@@ -187,20 +221,30 @@ export function buildEnrichPersonBody(input: {
 	const body: IDataObject = { person };
 
 	if (input.companyDomain?.trim()) {
-		body.company = { domain: normalizeDomain(input.companyDomain) };
+		body.company = { domain: parseEnrichDomain(input.companyDomain, 'Company domain') };
 	}
 
 	return body;
 }
 
-export function buildRevealBody(oceanIds: string, webhookUrl: string): IDataObject {
-	const personIds = parseCsvOrArray(oceanIds);
+export function buildRevealBody(oceanIds: string | string[], webhookUrl: string): IDataObject {
+	const personIds = parseMultiValue(oceanIds);
 	if (personIds.length === 0) {
-		throw new Error('At least one Ocean person ID is required');
+		throw new Error(
+			'At least one Ocean person ID is required. Use the id from Search People or Enrich Person (e.g. {{ $json.id }}).',
+		);
 	}
 
 	if (!webhookUrl?.trim()) {
-		throw new Error('Webhook URL is required for reveal operations (Ocean sends results asynchronously)');
+		throw new Error(
+			'Webhook URL is required. For backend workflows, use {{ $execution.resumeUrl }} and add a Wait node (On Webhook Call) after this node.',
+		);
+	}
+
+	try {
+		new URL(webhookUrl.trim());
+	} catch {
+		throw new Error('Webhook URL must be a valid URL (https://...)');
 	}
 
 	return {
@@ -209,10 +253,8 @@ export function buildRevealBody(oceanIds: string, webhookUrl: string): IDataObje
 	};
 }
 
-export function buildWarmupBody(companyDomains: string): IDataObject {
-	const domains = parseCsvOrArray(companyDomains)
-		.map((domain) => normalizeDomain(domain))
-		.filter(Boolean);
+export function buildWarmupBody(companyDomains: string | string[]): IDataObject {
+	const domains = normalizeDomainList(companyDomains, 'Company Domains');
 
 	if (domains.length === 0) {
 		throw new Error('At least one company domain is required');

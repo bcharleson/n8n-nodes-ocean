@@ -114,29 +114,39 @@ Reveal and verify phone numbers for people. This operation uses your phone credi
 
 ### Autocomplete Resource
 
-#### Autocomplete Companies (Free)
-Get company name suggestions based on partial input. Useful for building search interfaces.
+Autocomplete is a **synchronous lookup helper** — you send partial text, Ocean returns matching suggestions immediately in the same run (no webhook). It does **not** return full company/person profiles, emails, or phone numbers. Use the suggestions as input to Search or Enrich in the next step.
+
+**Credit cost:** 0.1 credits per API call (flat rate per run, not per suggestion). Uses your main Ocean credit balance. Much cheaper than Search or Enrich, so it is useful for fixing messy CRM/spreadsheet values before a paid step.
+
+#### Autocomplete Companies (0.1 credits/call)
+Returns up to 15 matches with `name` and `domain` (e.g. `stripe.com`). Use the domain for Enrich Company or Lookalike Domains in Search.
 
 **Parameters:**
-- `Query`: Partial company name to get suggestions for
+- `Query`: Beginning of the company name or domain
 
-#### Autocomplete Job Titles (Free)
-Get job title suggestions based on partial input. Helps standardize job title searches.
-
-**Parameters:**
-- `Query`: Partial job title to get suggestions for
-
-#### Autocomplete Keywords (Free)
-Get keyword suggestions for search queries. Improves search accuracy.
+#### Autocomplete Job Titles (0.1 credits/call)
+Returns up to 15 job title strings. Pass a match into Search People → Job Titles.
 
 **Parameters:**
-- `Query`: Partial keyword to get suggestions for
+- `Query`: Beginning of the job title
 
-#### Autocomplete Skills (Free)
-Get skill suggestions based on partial input. Useful for people searches.
+#### Autocomplete Keywords (0.1 credits/call)
+Returns up to 15 keyword strings for company search filters (Companies Filters JSON).
 
 **Parameters:**
-- `Query`: Partial skill name to get suggestions for
+- `Query`: Beginning of the keyword
+
+#### Autocomplete Skills (0.1 credits/call)
+Returns up to 15 skill strings for people search filters (People Filters JSON).
+
+**Parameters:**
+- `Query`: Beginning of the skill
+
+#### Autocomplete Locations (0.1 credits/call)
+Returns up to 15 city/region strings for location filters.
+
+**Parameters:**
+- `Query`: Beginning of the location name
 
 ### Other Resource
 
@@ -192,6 +202,7 @@ Ocean.io operations consume credits from your account:
 - **Company Enrich**: 1 credit (with domain) or 5 credits (without domain)
 - **People Search**: 1-3 credits per person (depending on lookalike usage)
 - **Person Enrich**: 3 credits per person
+- **Autocomplete** (all types): 0.1 credits per call
 
 ### Email Credits
 - **Reveal Emails**: 1 email credit per person
@@ -202,7 +213,6 @@ Ocean.io operations consume credits from your account:
 ### Free Operations
 - **Credit Balance**: Free
 - **Get Data Fields**: Free
-- **Autocomplete** (all types): Free
 - **Warmup Companies**: Free
 
 ## Example Workflows

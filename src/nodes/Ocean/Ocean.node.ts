@@ -4,7 +4,8 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	NodeConnectionType,
+	NodeApiError,
+	NodeConnectionTypes,
 	NodeOperationError,
 } from 'n8n-workflow';
 
@@ -23,6 +24,14 @@ import { personOperations, personFields } from './PersonDescription';
 import { otherOperations, otherFields } from './OtherDescription';
 import { revealOperations, revealFields } from './RevealDescription';
 import { autocompleteOperations, autocompleteFields } from './AutocompleteDescription';
+import { loadOptions } from './methods/loadOptions';
+
+const gettingStartedNotice = {
+	displayName: 'Quick Guide — Company: Look up or Find Similar Companies. Person: Find or Enrich a Lead. Autocomplete: Cheap Spelling Helper Before Search/Enrich (0.1 Credits/run). Reveal: Get Email/phone After Search or Enrich. Other: Check Credit Balance.',
+	name: 'gettingStartedNotice',
+	type: 'notice' as const,
+	default: '',
+};
 
 export class Ocean implements INodeType {
 	description: INodeTypeDescription = {
@@ -32,12 +41,12 @@ export class Ocean implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description: 'Interact with Ocean.io API for lookalike company and people discovery',
+		description: 'Find, enrich, and reveal company and people data from Ocean.io',
 		defaults: {
 			name: 'Ocean.io',
 		},
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'oceanApi',
@@ -59,33 +68,35 @@ export class Ocean implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
-						name: 'Company',
-						value: 'company',
-						description: 'Search and enrich company data with lookalike discovery',
-					},
-					{
-						name: 'Person',
-						value: 'person',
-						description: 'Search and enrich people data with lookalike discovery',
-					},
-					{
-						name: 'Reveal',
-						value: 'reveal',
-						description: 'Reveal emails and phone numbers by Ocean person ID',
-					},
-					{
 						name: 'Autocomplete',
 						value: 'autocomplete',
-						description: 'Get autocomplete suggestions for companies, job titles, keywords, skills, and locations',
+						description:
+							'Low-cost lookup (0.1 credits/run) — match partial names, titles, and locations before Search or Enrich',
+					},
+					{
+						name: 'Company',
+						value: 'company',
+						description: 'Find lookalike companies or enrich one company by website',
 					},
 					{
 						name: 'Other',
 						value: 'other',
-						description: 'Other operations (credits, data fields, warmup)',
+						description: 'Check credit balance, download filter lists, or warmup domains',
+					},
+					{
+						name: 'Person',
+						value: 'person',
+						description: 'Find lists of people or enrich one lead by name, email, or LinkedIn',
+					},
+					{
+						name: 'Reveal',
+						value: 'reveal',
+						description: 'Get email addresses or phone numbers for people you already found',
 					},
 				],
 				default: 'company',
 			},
+			gettingStartedNotice,
 			...companyOperations,
 			...personOperations,
 			...revealOperations,
@@ -97,6 +108,11 @@ export class Ocean implements INodeType {
 			...autocompleteFields,
 			...otherFields,
 		],
+		usableAsTool: true,
+	};
+
+	methods = {
+		loadOptions,
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -141,7 +157,12 @@ export class Ocean implements INodeType {
 					returnData.push(...executionErrorData);
 					continue;
 				}
-				throw error;
+
+				if (error instanceof NodeOperationError || error instanceof NodeApiError) {
+					throw error as NodeOperationError;
+				}
+
+				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
 			}
 		}
 
@@ -258,8 +279,8 @@ async function searchCompanies(this: IExecuteFunctions, itemIndex: number): Prom
 		domain: this.getNodeParameter('domain', itemIndex, '') as string,
 		employeeCountMin: this.getNodeParameter('employeeCountMin', itemIndex, '') as number | string,
 		employeeCountMax: this.getNodeParameter('employeeCountMax', itemIndex, '') as number | string,
-		countries: this.getNodeParameter('countries', itemIndex, '') as string,
-		industries: this.getNodeParameter('industries', itemIndex, '') as string,
+		countries: this.getNodeParameter('countries', itemIndex, []) as string | string[],
+		industries: this.getNodeParameter('industries', itemIndex, []) as string | string[],
 		companiesFiltersJson: this.getNodeParameter('companiesFiltersJson', itemIndex, '') as string,
 	});
 
@@ -279,7 +300,7 @@ async function searchPeople(this: IExecuteFunctions, itemIndex: number): Promise
 		personName: this.getNodeParameter('personName', itemIndex, '') as string,
 		jobTitles: this.getNodeParameter('jobTitles', itemIndex, '') as string,
 		companyDomains: this.getNodeParameter('companyDomains', itemIndex, '') as string,
-		countries: this.getNodeParameter('countries', itemIndex, '') as string,
+		countries: this.getNodeParameter('countries', itemIndex, []) as string | string[],
 		peopleFiltersJson: this.getNodeParameter('peopleFiltersJson', itemIndex, '') as string,
 		companiesFiltersJson: this.getNodeParameter('companiesFiltersJson', itemIndex, '') as string,
 		peoplePerCompany: this.getNodeParameter('peoplePerCompany', itemIndex, '') as number | string,

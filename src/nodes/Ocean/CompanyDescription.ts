@@ -15,13 +15,15 @@ export const companyOperations: INodeProperties[] = [
 			{
 				name: 'Search Companies',
 				value: 'search',
-				description: 'Find lookalike companies using Ocean.io\'s discovery engine (1 credit per company)',
+				description:
+					'Find companies similar to ones you already know — e.g. companies like topoffunnel.com (1 credit per result)',
 				action: 'Search companies',
 			},
 			{
 				name: 'Enrich Company',
 				value: 'enrich',
-				description: 'Enrich company data with Ocean.io\'s database (1 credit with domain, 5 credits without)',
+				description:
+					'Look up one company by website domain — e.g. stripe.com returns firmographics (1 credit)',
 				action: 'Enrich company data',
 			},
 		],
@@ -30,6 +32,32 @@ export const companyOperations: INodeProperties[] = [
 ];
 
 export const companyFields: INodeProperties[] = [
+	{
+		displayName:
+			'Find lookalike companies. Start with Lookalike Domains — enter one or more website domains (like topoffunnel.com) and Ocean returns similar companies. Add filters below to narrow results. Each company returned uses 1 credit.',
+		name: 'companySearchNotice',
+		type: 'notice',
+		displayOptions: {
+			show: {
+				resource: ['company'],
+				operation: ['search'],
+			},
+		},
+		default: '',
+	},
+	{
+		displayName:
+			'Look up a single company by website. Enter Domain below (e.g. stripe.com). You can paste a full URL — https and www are stripped automatically. Uses 1 credit per run.',
+		name: 'companyEnrichNotice',
+		type: 'notice',
+		displayOptions: {
+			show: {
+				resource: ['company'],
+				operation: ['enrich'],
+			},
+		},
+		default: '',
+	},
 	// Company Search Fields
 	{
 		displayName: 'Return All',
@@ -42,7 +70,7 @@ export const companyFields: INodeProperties[] = [
 			},
 		},
 		default: false,
-		description: 'Whether to return all results or only up to the limit',
+		description: 'Whether to return all results or only up to a given limit',
 	},
 	{
 		displayName: 'Limit',
@@ -60,7 +88,7 @@ export const companyFields: INodeProperties[] = [
 			maxValue: 100,
 		},
 		default: 50,
-		description: 'Max number of results to return (1-100)',
+		description: 'Max number of results to return',
 	},
 	{
 		displayName: 'Lookalike Domains',
@@ -74,20 +102,8 @@ export const companyFields: INodeProperties[] = [
 		},
 		default: '',
 		placeholder: 'example.com, company2.com',
-		description: 'Comma-separated list of company domains to find similar companies to. This is Ocean.io\'s core lookalike functionality.',
-	},
-	{
-		displayName: 'Company Name',
-		name: 'companyName',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['company'],
-				operation: ['search'],
-			},
-		},
-		default: '',
-		description: 'Search for companies by name (partial matches supported)',
+		description:
+			'Website domains of companies you want to find lookalikes for. Separate multiple with commas. Paste full URLs if needed — https and www are removed automatically.',
 	},
 	{
 		displayName: 'Domain',
@@ -100,7 +116,8 @@ export const companyFields: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Search for a specific company domain',
+		placeholder: 'example.com',
+		description: 'Optional — only return results that include this specific company domain',
 	},
 	{
 		displayName: 'Employee Count Min',
@@ -112,8 +129,11 @@ export const companyFields: INodeProperties[] = [
 				operation: ['search'],
 			},
 		},
-		default: '',
-		description: 'Minimum number of employees (maps to headcountMin)',
+		typeOptions: {
+			minValue: 0,
+		},
+		default: 0,
+		description: 'Minimum number of employees. Leave at 0 to ignore.',
 	},
 	{
 		displayName: 'Employee Count Max',
@@ -125,36 +145,43 @@ export const companyFields: INodeProperties[] = [
 				operation: ['search'],
 			},
 		},
-		default: '',
-		description: 'Maximum number of employees (maps to headcountMax)',
+		typeOptions: {
+			minValue: 0,
+		},
+		default: 0,
+		description: 'Maximum number of employees. Leave at 0 to ignore.',
 	},
 	{
-		displayName: 'Countries',
+		displayName: 'Country Names or IDs',
 		name: 'countries',
-		type: 'string',
+		type: 'multiOptions',
+		typeOptions: {
+			loadOptionsMethod: 'getCountries',
+		},
 		displayOptions: {
 			show: {
 				resource: ['company'],
 				operation: ['search'],
 			},
 		},
-		default: '',
-		placeholder: 'United States, Canada, United Kingdom',
-		description: 'Comma-separated list of countries to filter by',
+		default: [],
+		description: 'Limit results to companies headquartered in these countries. Pick from the dropdown — no need to type country codes yourself. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
-		displayName: 'Industries',
+		displayName: 'Industry Names or IDs',
 		name: 'industries',
-		type: 'string',
+		type: 'multiOptions',
+		typeOptions: {
+			loadOptionsMethod: 'getIndustries',
+		},
 		displayOptions: {
 			show: {
 				resource: ['company'],
 				operation: ['search'],
 			},
 		},
-		default: '',
-		placeholder: 'Software, Technology, SaaS',
-		description: 'Comma-separated list of industries to filter by',
+		default: [],
+		description: 'Limit results to these industries. Pick from the dropdown so values match Ocean exactly. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Companies Filters JSON',
@@ -167,7 +194,8 @@ export const companyFields: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Advanced company filters as JSON (merged with simple fields). Same shape as ocean-agent-cli --companies-filters.',
+		description:
+			'Optional advanced filters in JSON. Leave blank unless you need filters not listed above. Merges with the simple fields in this node.',
 	},
 
 	// Company Enrich Fields
@@ -182,7 +210,8 @@ export const companyFields: INodeProperties[] = [
 			},
 		},
 		default: '',
-		required: true,
-		description: 'Company domain to enrich (1 credit)',
+		placeholder: 'stripe.com',
+		description:
+			'Root company domain to enrich (1 credit). Accepts stripe.com, www.stripe.com, or https://stripe.com — normalized automatically before the API call.',
 	},
 ];

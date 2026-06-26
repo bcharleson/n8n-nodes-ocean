@@ -13,12 +13,16 @@ export class OceanApi implements ICredentialType {
 
 	documentationUrl = 'https://docs.ocean.io/getting-started/authentication';
 
-	icon: Icon = {
-		light: 'file:ocean-logomark.svg',
-		dark: 'file:ocean-logomark.svg',
-	};
+	icon: Icon = 'file:ocean-logomark.svg';
 
 	properties: INodeProperties[] = [
+		{
+			displayName:
+				'Create an API key in your Ocean.io dashboard: Settings → API Keys. Paste it below. Use "Test" to confirm the connection before building workflows.',
+			name: 'credentialHelpNotice',
+			type: 'notice',
+			default: '',
+		},
 		{
 			displayName: 'API Key',
 			name: 'apiKey',
@@ -26,7 +30,7 @@ export class OceanApi implements ICredentialType {
 			typeOptions: { password: true },
 			default: '',
 			required: true,
-			description: 'Your Ocean.io API key. You can find this in your Ocean.io dashboard under Settings > API Keys.',
+			description: 'Your Ocean.io API key from Settings → API Keys in the Ocean dashboard',
 		},
 	];
 

@@ -1,0 +1,12 @@
+{
+  "watch": ["dist"],
+  "ext": "js,json,svg",
+  "ignore": ["node_modules"],
+  "delay": 2,
+  "legacyWatch": true,
+  "verbose": true,
+  "exec": "node scripts/start-n8n-dev.js",
+  "env": {
+    "N8N_PORT": "5678"
+  }
+}

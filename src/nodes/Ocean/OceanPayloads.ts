@@ -1,3 +1,4 @@
+/* eslint-disable @n8n/community-nodes/require-node-api-error */
 /**
  * Ocean.io request payload helpers (aligned with ocean-agent-cli).
  * @see https://github.com/bcharleson/ocean-agent-cli
@@ -53,6 +54,25 @@ export function normalizeCompaniesFilters(
 		}
 	}
 
+	// v3 company search expects primaryLocations.includeCountries, not a bare countries array.
+	if (Array.isArray(out.countries) && out.countries.length > 0) {
+		const countryCodes = out.countries as string[];
+		delete out.countries;
+		const existing =
+			out.primaryLocations && typeof out.primaryLocations === 'object'
+				? (out.primaryLocations as Record<string, unknown>)
+				: {};
+		out.primaryLocations = {
+			...existing,
+			includeCountries: countryCodes,
+		};
+	}
+
+	// v3 company search expects IndustriesFilter, not a bare string array.
+	if (Array.isArray(out.industries)) {
+		out.industries = { industries: out.industries, mode: 'anyOf' };
+	}
+
 	return out;
 }
 
@@ -73,12 +93,127 @@ export function normalizeDomain(value: string): string {
 		.replace(/^https?:\/\//i, '')
 		.replace(/^www\./i, '')
 		.split('/')[0]
+		.split('?')[0]
+		.split('#')[0]
+		.split(':')[0]
 		.toLowerCase();
 }
 
+export function parseEnrichDomain(value: string, fieldName = 'Domain'): string {
+	const trimmed = value?.trim();
+	if (!trimmed) {
+		throw new Error(
+			`${fieldName} is required. Enter a root domain such as stripe.com (https:// and www are fine).`,
+		);
+	}
+
+	const domain = normalizeDomain(trimmed);
+	if (!domain || !DOMAIN_PATTERN.test(domain)) {
+		throw new Error(
+			`Invalid ${fieldName.toLowerCase()} "${trimmed}". Use a root domain like stripe.com or https://www.stripe.com — paths are stripped automatically.`,
+		);
+	}
+
+	return domain;
+}
+
 export function parseCsvOrArray(value: string | string[]): string[] {
-	if (Array.isArray(value)) return value.map((v) => v.trim()).filter(Boolean);
-	return value.split(',').map((v) => v.trim()).filter(Boolean);
+	if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean);
+	if (value === undefined || value === null) return [];
+	return String(value)
+		.split(',')
+		.map((v) => v.trim())
+		.filter(Boolean);
+}
+
+/** Normalize multiOptions (array) or expression (comma-separated string) values. */
+export function parseMultiValue(value: string | string[] | undefined | null): string[] {
+	return parseCsvOrArray(value ?? []);
+}
+
+const DOMAIN_PATTERN =
+	/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+
+export function normalizeDomainList(values: string | string[], fieldName: string): string[] {
+	const domains = parseMultiValue(values)
+		.map((value) => normalizeDomain(value))
+		.filter(Boolean);
+
+	if (domains.length === 0) {
+		return [];
+	}
+
+	for (const domain of domains) {
+		if (!DOMAIN_PATTERN.test(domain)) {
+			throw new Error(`Invalid domain in ${fieldName}: "${domain}"`);
+		}
+	}
+
+	return domains;
+}
+
+export function clampSearchLimit(limit: number, returnAll: boolean): number | undefined {
+	if (returnAll) {
+		return undefined;
+	}
+
+	if (!Number.isFinite(limit)) {
+		throw new Error('Limit must be a number between 1 and 100');
+	}
+
+	const rounded = Math.trunc(limit);
+	if (rounded < 1 || rounded > 100) {
+		throw new Error('Limit must be between 1 and 100');
+	}
+
+	return rounded;
+}
+
+import { COUNTRY_NAME_TO_CODE } from './OceanCountries';
+
+/** Ocean.io expects lowercase ISO 3166-1 alpha-2 country codes (e.g. us, ca, gb). */
+export function normalizeCountryCode(value: string): string {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		throw new Error('Country value cannot be empty');
+	}
+
+	const key = trimmed.toLowerCase();
+	if (COUNTRY_NAME_TO_CODE[key]) {
+		return COUNTRY_NAME_TO_CODE[key];
+	}
+
+	if (/^[a-z]{2}$/i.test(trimmed)) {
+		return trimmed.toLowerCase();
+	}
+
+	throw new Error(
+		`Invalid country "${trimmed}". Choose from the Countries list (ISO codes such as us, ca, gb) or use a comma-separated expression.`,
+	);
+}
+
+export function normalizeCountryCodes(value: string | string[] | undefined | null): string[] {
+	const parsed = parseMultiValue(value);
+	if (parsed.length === 0) {
+		return [];
+	}
+
+	return [...new Set(parsed.map((country) => normalizeCountryCode(country)))];
+}
+
+export function normalizeIndustryValues(value: string | string[] | undefined | null): string[] {
+	const parsed = parseMultiValue(value);
+	if (parsed.length === 0) {
+		return [];
+	}
+
+	return [...new Set(parsed.map((industry) => {
+		const trimmed = industry.trim();
+		if (!trimmed) {
+			throw new Error('Industry value cannot be empty');
+		}
+		return trimmed;
+	}))];
 }
 
 export function parseJsonObject(value: string, fieldName: string): Record<string, unknown> {
