@@ -4,7 +4,7 @@ import eslintPluginN8nNodesBase from 'eslint-plugin-n8n-nodes-base';
 export default [
 	...n8nEslint.default,
 	{
-		ignores: ['build.js', 'gulpfile.js', 'scripts/**', 'index.ts'],
+		ignores: ['gulpfile.js', 'scripts/**'],
 	},
 	{
 		files: ['src/credentials/**/*.ts', 'credentials/**/*.ts'],
