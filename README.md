@@ -1,282 +1,271 @@
-# n8n-nodes-ocean
+<p align="center">
+  <a href="https://ocean.io" target="_blank">
+    <img src="https://raw.githubusercontent.com/bcharleson/n8n-nodes-ocean/main/src/nodes/Ocean/ocean-logo.png" alt="Ocean.io" width="280" />
+  </a>
+</p>
 
-![n8n.io - Workflow Automation](https://raw.githubusercontent.com/n8n-io/n8n/master/assets/n8n-logo.png)
+<p align="center">
+  <strong>Lookalike company &amp; people discovery for n8n</strong><br />
+  Search, enrich, reveal, and normalize prospect data — directly inside your workflows.
+</p>
 
-This is an n8n community node for [Ocean.io](https://ocean.io) - the leading platform for lookalike company and people discovery.
+<p align="center">
+  <a href="https://www.npmjs.com/package/n8n-nodes-ocean"><img src="https://img.shields.io/npm/v/n8n-nodes-ocean.svg?style=flat-square" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/n8n-nodes-ocean"><img src="https://img.shields.io/npm/dm/n8n-nodes-ocean.svg?style=flat-square" alt="npm downloads" /></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="MIT license" /></a>
+  <a href="https://docs.n8n.io/integrations/community-nodes/"><img src="https://img.shields.io/badge/n8n-community_node-FF6D5A?style=flat-square&logo=n8n&logoColor=white" alt="n8n community node" /></a>
+</p>
 
-[Ocean.io](https://ocean.io) helps businesses find their ideal customers by discovering companies and people similar to their best prospects. This n8n node brings Ocean.io's powerful lookalike discovery and data enrichment capabilities directly into your automation workflows.
+---
+
+## What is this?
+
+**n8n-nodes-ocean** is a community node that connects [n8n](https://n8n.io) to the [Ocean.io](https://ocean.io) API.
+
+[Ocean.io](https://ocean.io) specializes in **lookalike discovery** — finding companies and people similar to your best customers — plus **firmographic enrichment** and **contact reveal**. This node wraps those capabilities in a single, workflow-friendly **Ocean.io** node with clear helper text, dropdown filters, and patterns built for real automation (CRM sync, lead enrichment, outbound prospecting).
+
+> **Install:** `n8n-nodes-ocean` on npm · **Node name in n8n:** `Ocean.io`
+
+---
+
+## Why use it?
+
+| Use case | What you do in n8n |
+| --- | --- |
+| **Find lookalike companies** | Search from seed domains (e.g. `stripe.com`) with country, industry, and size filters |
+| **Enrich a lead or account** | Look up a company by domain or a person by name, email, or LinkedIn |
+| **Build prospect lists** | Search people by job title, company domain, and country |
+| **Fix messy CRM data** | Autocomplete company names, titles, and locations before a paid search |
+| **Get verified contact info** | Reveal work emails or phone numbers for people already found in Ocean |
+| **Guard credit spend** | Check balance before large runs; warmup domains for bulk jobs |
+
+Built for **backend automation** — not just API coverage. Every resource includes in-node guidance, sensible defaults, and execute-time validation so workflows fail clearly instead of silently.
+
+---
+
+## Operations overview
+
+**14 operations** across **5 resources**:
+
+| Resource | Operations | Best for |
+| --- | --- | --- |
+| **Company** | Search Companies, Enrich Company | Lookalike discovery & firmographics |
+| **Person** | Search People, Enrich Person | Prospect lists & lead enrichment |
+| **Reveal** | Reveal Emails, Reveal Phones | Verified contact discovery (async) |
+| **Autocomplete** | Companies, Job Titles, Keywords, Skills, Locations | Normalizing messy input before Search/Enrich |
+| **Other** | Get Credit Balance, Get Data Fields, Warmup Companies | Ops, reference data & performance prep |
+
+---
 
 ## Installation
 
-Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
+### n8n (recommended)
 
-1. Go to **Settings > Community Nodes**
-2. Select **Install**
+1. Open **Settings → Community Nodes**
+2. Click **Install**
 3. Enter `n8n-nodes-ocean`
-4. Agree to the risks of using community nodes
-5. Select **Install**
+4. Confirm and **restart n8n**
 
-After installation restart n8n to register the new nodes.
+[Official n8n community node install guide →](https://docs.n8n.io/integrations/community-nodes/installation/)
 
-## Features
+### Self-hosted / manual
 
-This node provides **complete coverage** of the Ocean.io API with 13 operations across 5 resources:
+```bash
+npm install n8n-nodes-ocean
+```
 
-- ✅ **Company** (2 operations): Search and enrich company data
-- ✅ **Person** (2 operations): Search and enrich people data
-- ✅ **Reveal** (2 operations): Reveal emails and phone numbers
-- ✅ **Autocomplete** (4 operations): Get suggestions for companies, job titles, keywords, and skills
-- ✅ **Other** (3 operations): Credit balance, data fields, and company warmup
+Set `N8N_CUSTOM_EXTENSIONS` to include the package path, then restart n8n.
 
-**100% API Coverage** - All Ocean.io API endpoints are implemented!
-
-## Operations
-
-### Company Resource
-
-#### Search Companies (1 credit per company)
-Find lookalike companies using Ocean.io's discovery engine. This is Ocean.io's core functionality for discovering companies similar to your ideal customers.
-
-**Key Features:**
-- **Lookalike Discovery**: Provide example company domains to find similar companies
-- **Advanced Filtering**: Filter by employee count, industry, location, and more
-- **Pagination Support**: Handle large result sets efficiently
-
-**Parameters:**
-- `Lookalike Domains`: Comma-separated list of company domains to find similar companies to
-- `Company Name`: Search for companies by name (partial matches supported)
-- `Domain`: Search for a specific company domain
-- `Employee Count`: Filter by minimum and maximum employee count
-- `Countries`: Filter by specific countries
-- `Industries`: Filter by specific industries
-
-#### Enrich Company (1 credit with domain, 5 credits without)
-Enhance existing company data with Ocean.io's comprehensive database.
-
-**Parameters:**
-- `Domain`: Company domain to enrich (recommended for lower cost)
-- `Company Name`: Company name to enrich
-
-### Person Resource
-
-#### Search People (1-3 credits per person)
-Find lookalike people using Ocean.io's discovery engine. Perfect for finding decision-makers and prospects similar to your best customers.
-
-**Key Features:**
-- **Lookalike Discovery**: Provide example LinkedIn handles to find similar people
-- **Job Title Filtering**: Target specific roles and seniority levels
-- **Company Filtering**: Find people at specific companies or similar companies
-
-**Parameters:**
-- `Lookalike People`: Comma-separated list of LinkedIn handles to find similar people to
-- `Person Name`: Search for people by name
-- `Job Titles`: Filter by specific job titles
-- `Company Domains`: Find people from specific companies
-- `Countries`: Filter by location
-
-#### Enrich Person (3 credits per person)
-Enhance individual prospect data with Ocean.io's database.
-
-**Parameters:**
-- `Email`: Email address to enrich
-- `LinkedIn Handle`: LinkedIn handle (the part after linkedin.com/in/)
-- `Person Name`: Full name of the person to enrich
-
-### Reveal Resource
-
-#### Reveal Emails (1 email credit per person)
-Reveal and verify email addresses for people. This operation uses your email credits pool.
-
-**Key Features:**
-- **Batch Processing**: Reveal multiple emails in a single request
-- **Verification**: Returns verification status for each email
-- **Multiple Identifiers**: Use LinkedIn handle, name, or company domain
-
-**Parameters:**
-- `People`: List of people to reveal emails for
-  - `LinkedIn Handle`: LinkedIn handle (e.g., john-doe)
-  - `Person Name`: Full name of the person
-  - `Company Domain`: Company domain to help identify the person
-
-#### Reveal Phones (1 phone credit per person)
-Reveal and verify phone numbers for people. This operation uses your phone credits pool.
-
-**Key Features:**
-- **Batch Processing**: Reveal multiple phone numbers in a single request
-- **Verification**: Returns verification status for each phone number
-- **Multiple Identifiers**: Use LinkedIn handle, name, or company domain
-
-**Parameters:**
-- `People`: List of people to reveal phone numbers for
-  - `LinkedIn Handle`: LinkedIn handle (e.g., john-doe)
-  - `Person Name`: Full name of the person
-  - `Company Domain`: Company domain to help identify the person
-
-### Autocomplete Resource
-
-Autocomplete is a **synchronous lookup helper** — you send partial text, Ocean returns matching suggestions immediately in the same run (no webhook). It does **not** return full company/person profiles, emails, or phone numbers. Use the suggestions as input to Search or Enrich in the next step.
-
-**Credit cost:** 0.1 credits per API call (flat rate per run, not per suggestion). Uses your main Ocean credit balance. Much cheaper than Search or Enrich, so it is useful for fixing messy CRM/spreadsheet values before a paid step.
-
-#### Autocomplete Companies (0.1 credits/call)
-Returns up to 15 matches with `name` and `domain` (e.g. `stripe.com`). Use the domain for Enrich Company or Lookalike Domains in Search.
-
-**Parameters:**
-- `Query`: Beginning of the company name or domain
-
-#### Autocomplete Job Titles (0.1 credits/call)
-Returns up to 15 job title strings. Pass a match into Search People → Job Titles.
-
-**Parameters:**
-- `Query`: Beginning of the job title
-
-#### Autocomplete Keywords (0.1 credits/call)
-Returns up to 15 keyword strings for company search filters (Companies Filters JSON).
-
-**Parameters:**
-- `Query`: Beginning of the keyword
-
-#### Autocomplete Skills (0.1 credits/call)
-Returns up to 15 skill strings for people search filters (People Filters JSON).
-
-**Parameters:**
-- `Query`: Beginning of the skill
-
-#### Autocomplete Locations (0.1 credits/call)
-Returns up to 15 city/region strings for location filters.
-
-**Parameters:**
-- `Query`: Beginning of the location name
-
-### Other Resource
-
-#### Get Credit Balance (Free)
-Monitor your Ocean.io API credit usage and remaining balance.
-
-**Returns:**
-- Standard credits balance
-- Email credits balance (for email reveal operations)
-- Phone credits balance (for phone reveal operations)
-
-#### Get Data Fields (Free)
-Retrieve all valid data fields for Ocean.io searches. Returns industries, technologies, regions, seniorities, departments, and more.
-
-**Use Cases:**
-- Build dynamic dropdowns in your application
-- Validate search parameters before making requests
-- Discover available filter options
-
-**Returns:**
-- Industries list
-- Technologies list
-- Regions/countries list
-- Seniorities list
-- Departments list
-- And more...
-
-#### Warmup Companies (Free)
-Pre-load company data for faster subsequent searches. Useful for large-scale operations.
-
-**Parameters:**
-- `Company Domains`: Comma-separated list of company domains to warmup
-
-**Use Cases:**
-- Prepare data before bulk enrichment operations
-- Optimize performance for frequently accessed companies
-- Reduce latency for time-sensitive workflows
+---
 
 ## Authentication
 
-This node uses Ocean.io's API key authentication. You can find your API key in your Ocean.io dashboard under **Settings > API Keys**.
+1. Get an API key from [Ocean.io → Settings → API Keys](https://app.ocean.io/)
+2. In n8n, add credentials of type **Ocean.io API**
+3. Paste your key and click **Test** (calls `GET /v2/credits/balance`)
 
-1. In n8n, create new credentials of type "Ocean.io API"
-2. Enter your Ocean.io API key
-3. Save the credentials
+---
 
-## Credit Costs
+## Resources & operations
 
-Ocean.io operations consume credits from your account:
+### Company
 
-### Standard Credits
-- **Company Search**: 1 credit per company returned
-- **Company Enrich**: 1 credit (with domain) or 5 credits (without domain)
-- **People Search**: 1-3 credits per person (depending on lookalike usage)
-- **Person Enrich**: 3 credits per person
-- **Autocomplete** (all types): 0.1 credits per call
+#### Search Companies
+Find companies similar to your seed domains — Ocean's core lookalike engine.
 
-### Email Credits
-- **Reveal Emails**: 1 email credit per person
+- **Lookalike Domains** — comma-separated domains (e.g. `topoffunnel.com, stripe.com`); URLs normalized automatically
+- **Countries & Industries** — searchable dropdowns loaded from Ocean's data fields
+- **Employee count** — min/max filters
+- **Companies Filters JSON** — optional advanced filters
 
-### Phone Credits
-- **Reveal Phones**: 1 phone credit per person
+#### Enrich Company
+Look up one company by website domain (e.g. `stripe.com`). Accepts full URLs — `https` and `www` are stripped automatically.
 
-### Free Operations
-- **Credit Balance**: Free
-- **Get Data Fields**: Free
-- **Warmup Companies**: Free
+---
 
-## Example Workflows
+### Person
 
-### Find Lookalike Companies
-1. Use **Company > Search Companies**
-2. Set `Lookalike Domains` to your best customer domains (e.g., "stripe.com, shopify.com")
-3. Add filters for employee count, industry, or location as needed
-4. Process results for lead generation or market research
+#### Search People
+Build lists of prospects with filters that map to Ocean's v3 people search.
 
-### Enrich CRM Data
-1. Use **Company > Enrich Company** or **Person > Enrich Person**
-2. Provide domain/email/LinkedIn handle from your CRM
-3. Merge enriched data back into your CRM system
+- **Job Titles**, **Company Domains**, **Countries**
+- **Lookalike People** — LinkedIn handles for similarity search
+- **People Filters JSON** / **Companies Filters JSON** — advanced filters
 
-### Reveal Contact Information
-1. Use **Person > Search People** to find prospects
-2. Use **Reveal > Reveal Emails** to get verified email addresses
-3. Use **Reveal > Reveal Phones** to get verified phone numbers
-4. Export to your CRM or outreach tool
+#### Enrich Person
+Look up one person. Provide **at least one** identifier:
 
-### Build Dynamic Search Forms
-1. Use **Autocomplete > Autocomplete Companies** for company name suggestions
-2. Use **Autocomplete > Autocomplete Job Titles** for role suggestions
-3. Use **Other > Get Data Fields** to populate industry/technology dropdowns
-4. Create user-friendly search interfaces with validated inputs
+- LinkedIn URL
+- Email
+- Full name
+- First name + last name
 
-### Optimize Bulk Operations
-1. Use **Other > Warmup Companies** to pre-load company data
-2. Run bulk enrichment operations with reduced latency
-3. Monitor performance improvements for frequently accessed companies
+**Tip:** Name + work email (e.g. `Brandon Charleson` + `brandon@company.com`) works well for lead enrichment.
 
-### Monitor Credit Usage
-1. Use **Other > Get Credit Balance** before expensive operations
-2. Set up conditional logic to prevent workflows from running when credits are low
-3. Send alerts when credit balance drops below threshold
-4. Track email and phone credit usage separately
+---
 
-## Rate Limits
+### Reveal
 
-Ocean.io API has a rate limit of 300 requests per minute. The node handles rate limiting automatically and will retry failed requests when appropriate.
+Discover **verified** work emails or phone numbers for people you already found via Search or Enrich.
 
-## Error Handling
+> **Important:** Reveal is **asynchronous**. The node returns `{ "status": "in progress" }` immediately. Ocean delivers results to your **Webhook URL** when ready.
 
-The node provides detailed error messages for common issues:
-- Insufficient credits
-- Invalid API key
-- Validation errors
-- Rate limiting
+**Requirements:**
+- **Ocean person IDs** from Search People or Enrich Person (`id` field in output)
+- **Webhook URL** — for in-workflow delivery, use `{{ $execution.resumeUrl }}` and add a **Wait** node (mode: *On Webhook Call*) after Reveal
 
-Enable "Continue on Fail" in your workflow to handle errors gracefully.
+**Account note:** Reveal requires email/phone verification to be enabled on your Ocean.io organization. If disabled, the API returns `403`.
 
-## Resources
+---
 
-- [Ocean.io API Documentation](https://docs.ocean.io/)
-- [Ocean.io Dashboard](https://app.ocean.io/)
-- [n8n Community Nodes Documentation](https://docs.n8n.io/integrations/community-nodes/)
+### Autocomplete
+
+Cheap, synchronous lookup to fix spelling before Search or Enrich.
+
+| Operation | Returns | Typical next step |
+| --- | --- | --- |
+| **Companies** | Name + domain suggestions | Enrich Company or Lookalike Domains |
+| **Job Titles** | Title strings | Search People → Job Titles |
+| **Keywords** | Keyword strings | Companies Filters JSON |
+| **Skills** | Skill strings | People Filters JSON |
+| **Locations** | City/region strings | Location filters |
+
+**Cost:** 0.1 credits per call (flat, not per suggestion). Does not return full profiles or contact info.
+
+---
+
+### Other
+
+| Operation | Cost | Purpose |
+| --- | --- | --- |
+| **Get Credit Balance** | Free | Check standard, email, and phone credit pools |
+| **Get Data Fields** | Free | Raw lists (industries, countries, etc.) — most users rely on in-node dropdowns instead |
+| **Warmup Companies** | Free | Pre-load domains before bulk search/enrich |
+
+---
+
+## Example workflows
+
+### Lookalike company discovery
+```
+Manual Trigger → Ocean.io (Company → Search Companies)
+  Lookalike Domains: topoffunnel.com
+  Limit: 25
+→ Spreadsheet / CRM / Slack
+```
+
+### CRM lead enrichment
+```
+HubSpot Trigger → Ocean.io (Person → Enrich Person)
+  Person Name: {{ $json.firstname }} {{ $json.lastname }}
+  Email: {{ $json.email }}
+→ HubSpot (update contact)
+```
+
+### Normalize then enrich
+```
+Google Sheets → Ocean.io (Autocomplete → Companies)
+  Query: {{ $json.companyName }}
+→ Set (pick best domain) → Ocean.io (Company → Enrich Company)
+```
+
+### Search → reveal email (async)
+```
+Ocean.io (Person → Search People) → Ocean.io (Reveal → Reveal Emails)
+  Ocean Person IDs: {{ $json.id }}
+  Webhook URL: {{ $execution.resumeUrl }}
+→ Wait (On Webhook Call) → CRM / sequencer
+```
+
+---
+
+## Credit costs
+
+Rates below reflect Ocean.io's [v3 unified credit model](https://app.ocean.io/docs/getting-started/credits). Check your plan if you're on enterprise/legacy pricing.
+
+| Operation | Cost |
+| --- | --- |
+| Search Companies | 0.2 credits / company returned |
+| Search People | 0.2 credits / person returned |
+| Enrich Company | 0.1 credits / result |
+| Enrich Person | 0.1 credits / result |
+| Autocomplete (all types) | 0.1 credits / call |
+| Reveal Emails | 1 credit / email **found** |
+| Reveal Phones | 10 credits / phone **found** |
+| Get Credit Balance | Free |
+| Get Data Fields | Free |
+| Warmup Companies | Free |
+
+Use **Other → Get Credit Balance** before large batch runs.
+
+---
+
+## Developer setup
+
+```bash
+git clone https://github.com/bcharleson/n8n-nodes-ocean.git
+cd n8n-nodes-ocean
+npm install
+npm run dev:full          # local n8n at http://localhost:5678
+npm run verify:audit      # build + package checks + n8n-node lint
+OCEAN_API_TOKEN=xxx npm run verify:e2e   # live API smoke test (optional)
+```
+
+---
+
+## Error handling
+
+The node surfaces clear errors for common Ocean API responses:
+
+- Insufficient credits (`402`)
+- Invalid or missing API key (`403`)
+- Validation errors (`422`)
+- Reveal not enabled on account (`403`)
+
+Enable **Continue on Fail** on the node to capture errors per item instead of stopping the workflow.
+
+Ocean.io rate limit: **300 requests/minute**.
+
+---
+
+## Links
+
+| | |
+| --- | --- |
+| **npm** | https://www.npmjs.com/package/n8n-nodes-ocean |
+| **GitHub** | https://github.com/bcharleson/n8n-nodes-ocean |
+| **Ocean.io API docs** | https://docs.ocean.io/ |
+| **Ocean.io dashboard** | https://app.ocean.io/ |
+| **n8n community nodes** | https://docs.n8n.io/integrations/community-nodes/ |
+| **Report an issue** | https://github.com/bcharleson/n8n-nodes-ocean/issues |
+
+---
 
 ## License
 
-[MIT](https://github.com/bcharleson/n8n-nodes-ocean/blob/master/LICENSE.md)
+[MIT](LICENSE.md)
 
 ## Support
 
-For issues with this n8n community node, please [open an issue](https://github.com/bcharleson/n8n-nodes-ocean/issues) on GitHub.
-
-For Ocean.io API support, contact [Ocean.io support](https://ocean.io/support).
+- **This node:** [Open a GitHub issue](https://github.com/bcharleson/n8n-nodes-ocean/issues)
+- **Ocean.io API:** [Ocean.io support](https://ocean.io/support)
