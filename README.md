@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://ocean.io" target="_blank">
-    <img src="https://raw.githubusercontent.com/bcharleson/n8n-nodes-ocean/main/src/nodes/Ocean/ocean-logo.png" alt="Ocean.io" width="280" />
+    <img src="https://raw.githubusercontent.com/bcharleson/n8n-nodes-ocean/main/nodes/Ocean/ocean-logo.png" alt="Ocean.io" width="280" />
   </a>
 </p>
 

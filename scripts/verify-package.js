@@ -39,6 +39,14 @@ for (const credentialPath of pkg.n8n.credentials) {
 	assert(fs.existsSync(path.join(root, credentialPath)), `Configured credential missing: ${credentialPath}`);
 }
 
+for (const entry of [...pkg.n8n.nodes, ...pkg.n8n.credentials]) {
+	const sourcePath = entry.replace(/^dist\//, '').replace(/\.js$/, '.ts');
+	assert(
+		fs.existsSync(path.join(root, sourcePath)),
+		`Creator Portal source file missing in repo: ${sourcePath} (from ${entry})`,
+	);
+}
+
 const iconPath = path.join(root, 'dist/nodes/Ocean/ocean-logomark.svg');
 const iconDarkPath = path.join(root, 'dist/nodes/Ocean/ocean-logomark.dark.svg');
 assert(fs.existsSync(iconPath), 'Node icon missing from dist output');
