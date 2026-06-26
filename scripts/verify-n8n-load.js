@@ -52,3 +52,11 @@ for (const credentialPath of pkg.n8n.credentials) {
 }
 
 console.log('n8n community node load simulation passed.');
+
+// Some n8n installs validate via the package main entry (require('n8n-nodes-ocean').Ocean).
+const pkgEntry = require(path.join(pkgRoot, 'index.js'));
+assert(typeof pkgEntry.Ocean === 'function', 'index.js must export Ocean');
+assert(typeof pkgEntry.OceanApi === 'function', 'index.js must export OceanApi');
+new pkgEntry.Ocean();
+new pkgEntry.OceanApi();
+console.log('- package entry exports Ocean and OceanApi');

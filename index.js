@@ -1,3 +1,9 @@
 'use strict';
 
-// n8n loads nodes and credentials from package.json "n8n.nodes" / "n8n.credentials".
+const { Ocean } = require('./dist/nodes/Ocean/Ocean.node');
+const { OceanApi } = require('./dist/credentials/OceanApi.credentials');
+
+module.exports = {
+	Ocean,
+	OceanApi,
+};

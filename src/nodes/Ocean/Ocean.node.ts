@@ -5,7 +5,6 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	NodeApiError,
-	NodeConnectionTypes,
 	NodeOperationError,
 } from 'n8n-workflow';
 
@@ -48,8 +47,11 @@ export class Ocean implements INodeType {
 		defaults: {
 			name: 'Ocean.io',
 		},
-		inputs: [NodeConnectionTypes.Main],
-		outputs: [NodeConnectionTypes.Main],
+		// NodeConnectionTypes is unavailable during n8n's VM install validation on some hosts.
+		// eslint-disable-next-line @n8n/community-nodes/node-connection-type-literal
+		inputs: ['main'],
+		// eslint-disable-next-line @n8n/community-nodes/node-connection-type-literal
+		outputs: ['main'],
 		credentials: [
 			{
 				name: 'oceanApi',
