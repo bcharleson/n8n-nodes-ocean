@@ -1,6 +1,7 @@
 const { src, dest, parallel } = require('gulp');
 
 function buildNodeIcons() {
+	src('src/nodes/Ocean/*.node.json').pipe(dest('dist/nodes/Ocean'));
 	return src('src/nodes/Ocean/*.{svg,png}').pipe(dest('dist/nodes/Ocean'));
 }
 

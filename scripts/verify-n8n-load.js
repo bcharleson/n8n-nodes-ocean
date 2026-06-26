@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Loads the built package the same way n8n does when N8N_CUSTOM_EXTENSIONS is set.
+ * Loads the built package the same way n8n does (loadClassInIsolation + derived class names).
  */
+const { createContext, Script } = require('vm');
 const path = require('path');
 const fs = require('fs');
 
@@ -14,28 +15,40 @@ function assert(condition, message) {
 	}
 }
 
-function loadClass(relativePath, exportName) {
-	const modulePath = path.join(pkgRoot, relativePath);
-	assert(fs.existsSync(modulePath), `Missing file: ${relativePath}`);
-	const loaded = require(modulePath);
-	assert(loaded[exportName], `Class ${exportName} not exported from ${relativePath}`);
-	return loaded[exportName];
+function deriveClassName(sourcePath) {
+	return path.parse(sourcePath).name.split('.')[0];
 }
 
-const Ocean = loadClass('dist/nodes/Ocean/Ocean.node.js', 'Ocean');
-const OceanApi = loadClass('dist/credentials/OceanApi.credentials.js', 'OceanApi');
+function loadClassInIsolation(sourcePath, className) {
+	const filePath = path.resolve(pkgRoot, sourcePath).replace(/\\/g, '/');
+	assert(fs.existsSync(filePath), `Missing file: ${sourcePath}`);
 
-new Ocean();
-new OceanApi();
+	const context = createContext({ require });
+	try {
+		const script = new Script(`new (require('${filePath}').${className})()`);
+		return script.runInContext(context);
+	} catch (error) {
+		if (error instanceof TypeError) {
+			throw new Error(
+				`Class could not be found for ${sourcePath} (expected export "${className}"). ${error.message}`,
+			);
+		}
+		throw error;
+	}
+}
 
 for (const nodePath of pkg.n8n.nodes) {
-	assert(fs.existsSync(path.join(pkgRoot, nodePath)), `Configured node missing: ${nodePath}`);
+	const className = deriveClassName(nodePath);
+	const instance = loadClassInIsolation(nodePath, className);
+	assert(instance.description?.name, `Node ${nodePath} must define description.name`);
+	console.log(`- node ${nodePath} → ${className} (${instance.description.displayName})`);
 }
 
 for (const credentialPath of pkg.n8n.credentials) {
-	assert(fs.existsSync(path.join(pkgRoot, credentialPath)), `Configured credential missing: ${credentialPath}`);
+	const className = deriveClassName(credentialPath);
+	const instance = loadClassInIsolation(credentialPath, className);
+	assert(instance.name, `Credential ${credentialPath} must define name`);
+	console.log(`- credential ${credentialPath} → ${className} (${instance.displayName})`);
 }
 
 console.log('n8n community node load simulation passed.');
-console.log(`- nodes: ${pkg.n8n.nodes.join(', ')}`);
-console.log(`- credentials: ${pkg.n8n.credentials.join(', ')}`);
